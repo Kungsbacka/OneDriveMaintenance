@@ -1,4 +1,4 @@
-. "$PSScriptRoot\Config.dev.ps1"
+. "$PSScriptRoot\Config.ps1"
 
 function ConnectPnP() {
     $encryptedKey = $Script:Config.PEMPrivateKey
