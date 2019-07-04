@@ -1,7 +1,9 @@
 # OneDrive Maintenance Script
 
-This is a script for OneDrive maintenance. Currently it sets the Conditional Access policy and
-saves an inventory of all OneDrives to a database.
+Scripts for OneDrive maintenance and inventory:
+
+* OneDriveInventory.ps1 takes inventory of OneDrive storage usage
+* SetOneDriveConditionalAccessPolicy.ps1 sets CA policy to AllowLimitedAccess for all OneDrives
 
 In order to authenticate even when legacy authentication is disabled (LegacyAuthProtocolsEnabled = false), we create and App registration and use certificate authentication.
 
