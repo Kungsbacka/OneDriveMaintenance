@@ -1,11 +1,11 @@
-. "$PSScriptRoot\Config.dev.ps1"
+. "$PSScriptRoot\Config.ps1"
 . "$PSScriptRoot\Common.ps1"
 
 function RescheduleTask()
 {
     $task = Get-ScheduledTask -TaskName 'SetOneDriveConditionalAccessPolicy'
     $task.Triggers | ForEach-Object {
-        $_.StartBoundary = (Get-Date).AddMinutes(30).ToString('o')
+        $_.StartBoundary = (Get-Date).AddMinutes(10).ToString('o')
     }
     $task | Set-ScheduledTask
 }
@@ -28,18 +28,19 @@ function WriteQueueToFile([System.Collections.Generic.Queue[string]]$Queue)
     }
 }
 
-function WriteLogEntry([string]$LogEntry)
+function WriteLogEntry([string]$Entry, [string]$Type)
 {
-    $logFile = "$PSScriptRoot\error.log"
-    Get-Date -Format 'o' | Out-File -FilePath $logFile -Append
-    $entry | Out-File -FilePath $logFile -Append
+    $logFile = "$PSScriptRoot\log.txt"
+    $time = Get-Date -Format 'o'
+    $padding = [string]::new(' ', 11 - $Type.Length)
+    "$time $Type $padding $Entry" | Out-File -FilePath $logFile -Append
 }
 
 function HandleException($Queue, $Url, $ErrorRecord)
 {
     WriteQueueToFile -Queue $Queue
-    $logEntry = $Url + "`r`n" + $ErrorRecord.ToString()
-    WriteLogEntry -LogEntry $logEntry
+    $logEntry = $Url + ' : ' + $ErrorRecord.ToString()
+    WriteLogEntry -Entry $logEntry -Type 'Error'
     RescheduleTask
     exit
 }
@@ -62,13 +63,14 @@ while ($count -lt 1000 -and $queue.Count -gt 0) {
     catch {
         HandleException -Queue $queue -Url $siteUrl -ErrorRecord $_
     }
-    if ($siteDetails.ConditionalAccessPolicy -ne 'AllowLimitedAccess')
+    if ($siteDetails.ConditionalAccessPolicy -ne $Script:Config.ConditionalAccessPolicy)
     {
         try {
-            $siteDetails.ConditionalAccessPolicy = 'AllowLimitedAccess'
+            $siteDetails.ConditionalAccessPolicy = $Script:Config.ConditionalAccessPolicy
             $null = $siteDetails.Update()
             $Script:PnPContext.Load($siteDetails)
             Invoke-PnPQuery
+            WriteLogEntry -Entry ('Updated site ' + $siteDetails.Url) -Type 'Information'
         }
         catch {
             HandleException -Queue $queue -Url $siteUrl -ErrorRecord $_

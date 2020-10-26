@@ -13,4 +13,6 @@ $Script:Config = @{
     PEMPrivateKey = ''
     # Connection string to inventory database
     ConnectionString = 'Server=dbserver.contoso.com;Database=Inventory;Integrated Security=True'
+    # This is the Conditional Access Policy that is set on all OneDrives
+    ConditionalAccessPolicy = 'AllowLimitedAccess'
 }
